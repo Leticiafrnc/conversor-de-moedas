@@ -29,53 +29,92 @@
         o plano free. Seus dados de cartão de crédito não serão solicitados.
 */
 
+/* Pegando os selects (referencias) que são a conversão de BR para USD de inicio*/
 
-/* Pegando os selects que são a conversão de BR para USD de inicio*/
-
-const currencyOneEl = document.querySelector('[data-js = "currency-one"]'); /*data-js acessa o elemento js no caso o select*/
+const currencyOneEL = document.querySelector('[data-js="currency-one"]');
+ /*data-js acessa o elemento js no caso o select*/
 const currencyTwoEl = document.querySelector('[data-js = "currency-two"]');
-console.log(currencyOneEl, currencyTwoEl )
+const currenciesEl = document.querySelector('[data-js="currencies-container"]')
+const timesCurrencyOneEl = document.querySelector('[data-js="currency-one-times"]')
 
 /* Popular os selects com as informações das moedas para isso está sendo utilizado uma APi*/
 
-const url = 'https://v6.exchangerate-api.com/v6/400c6b2549090ecb8d7ff11d/latest/USD' /*chave da API*/
-
+const url =
+  "https://v6.exchangerate-api.com/v6/400c6b2549090ecb8d7ff11d/latest/USD"; /*chave da API*/
 
 /*  Tratando todos os Erros da API de acordo com a documentação, poderia fazer generico mais assim o erro fica mais expecifico */
-const getErrorMessage = errorType =>({
-
-})
-
+const getErrorMessage = (errorType) =>
+  ({
+    "unsupported-code": "A moeda não existe em nossa banco de dados.",
+    "malformed-request": "Seu request precisa seguir à estrutura",
+    "invalid-key": "A chave API não é valida",
+    "quota-reached":
+      "Sua conta alcançou o limite de requests permitidos em seu plano atual",
+  }[errorType] ||
+  "Não foi possivel obter as  informações"); /* Se não for nenhuma dessas informações de erro ele exibe essa mensagem generica*/
 
 /* Tratameto de Erros com try catch*/
-const fetchExchangeRate = async() => { /* a função async espera uma ação ser finalizada  para executar outra*/
+const fetchExchangeRate = async () => {
+  /* a função async espera uma ação ser finalizada  para executar outra*/
 
   try {
-     const response = await fetch(url) /*Se utiliza fecth para buscar dados de outro lugar nessa caso na API*. await = enquanto a requisição não chegar nehuem codigo é executado */  
-     const exchangeRateData =  await response.json() /*obtem as informações da API em json*/ 
+    const response = await fetch(
+      url
+    ); /*Se utiliza fecth para buscar dados de outro lugar nessa caso na API*. await = enquanto a requisição não
+     chegar nehuem codigo é executado */
 
-    if(exchangeRateData.result ==='error'){ /*Se der um erro eu consigo criar minha propria mensagem*/
-      throw new Error('Não foi possível obter as informações')
+    /* Tratamento de erro caso a internet caia*/
+    if (!response.ok) {
+      throw new Error(
+        "Sua conexão falhou. Não foi possivel obter asinformações"
+      );
     }
-    } catch (err) {
-    alert(err.message)
+
+    const exchangeRateData =
+      await response.json(); /*obtem as informações da API em json*/
+
+    if (exchangeRateData.result === "error") {
+      /*Se der um erro eu consigo criar minha propria mensagem*/
+      throw new Error(getErrorMessage(exchangeRateData["error-type"]));
+    }
+  } catch (err) {
+    /* criando uma div para personalizar o alert */
+    const div = document.createElement("div");
+    const button = document.createElement("button");
+
+    div.classList.add('alert', 'alert-warning', 'alert-dismissible', 'fade', 'show')
+
+        button.classList.add('btn-close')
+        button.setAttribute('type', 'button')
+        button.setAttribute('aria-label', 'Close')
+
+        button.addEventListener('click', () => {
+            div.remove();
+        })
+
+        div.appendChild(button)
+
+        currenciesEl.insertAdjacentElement('afterend', div)
   }
+};
+
+/*Preenchendo os selects com as moedas*/
+const init = async () => {
+  const exchangeRateData =  await fetchExchangeRate()
+ 
+  const getOptions = selectedCurrency => Object.keys(internalExchageRate.conversion_rates)
+    .map(currency => `<option ${currency === selectedCurrency ? 'selected': ''} >${currency}</option>`)
+    .join('')
+
+    currencyOneEL.innerHTML = getOptions('USD');
+    currencyTwoEl.innerHTML = getOptions('BRL');
+  
+  convertedValeuEl.textContent = `BRL:${internalExchageRate.conversion_rates.BRL.toFixed(2)}`
+  valeuPrecisionEl.textContent = `1 USD = ${internalExchageRate.conversion_rates.BRL} BRL`
+  
+  
 }
 
-fetchExchangeRate()
 
-
-const option = `<option>Oi</option>`
-currencyOneEl.innerHTML = option /* o innerHTML adicona o texto no caso o 'OI'*/
-currencyTwoEl.innerHTML = option
-
-
-
-
-
-
-
-
-
-
+init()
 
